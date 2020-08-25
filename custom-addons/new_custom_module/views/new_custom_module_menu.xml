@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<odoo>
+ <!-- New Custom Module Menu -->
+ <menuitem id="menu_new_custom_module"
+ name="Prova" />
+</odoo>
