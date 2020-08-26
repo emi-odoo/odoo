@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+<menuitem id="main_emi_library_menu" name="Emi Library"/>
+        <!-- A first level in the left side menu is needed
+             before using action= attribute -->
+<menuitem id="emi_library_menu" name="Emi Library"
+    parent="main_emi_library_menu"/>
+        <!-- the following menuitem should appear *after*
+             its parent openacademy_menu and *after* its
+             action course_list_action -->
+<menuitem id="emi_library_books_menu" name="Books" parent="emi_library_menu"
+    action="emi_library_book_list_action"/>
+
+</odoo>
