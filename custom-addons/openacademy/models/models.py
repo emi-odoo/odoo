@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, exceptions
-
+from datetime import timedelta
 
 # class openacademy(models.Model):
 #     _name = 'openacademy.openacademy'
@@ -43,13 +43,12 @@ class Course(models.Model):
         default = dict(default or {})
 
         copied_count = self.search_count(
-            [('name', '=like', u"Copy of {}%".format(self.name))])
+            [('name', '=like', f"Copy of {self.name}")])
         if not copied_count:
-            new_name = u"Copy of {}".format(self.name)
+            default['name']= f"Copy of {self.name}"
         else:
-            new_name = u"Copy of {} ({})".format(self.name, copied_count)
+            default['name'] = f"Copy of {self.name} ({copied_count})"
 
-        default['name'] = new_name
         return super(Course, self).copy(default)
 
     
@@ -57,20 +56,24 @@ class Course(models.Model):
 class Session(models.Model):
     _name = 'openacademy.session'
     _description = "OpenAcademy Sessions"
-
+    
     name = fields.Char(required=True)
     start_date = fields.Date()
     duration = fields.Float(digits=(6, 2), help="Duration in days")
+    end_date = fields.Date(string="End of course", compute = '_get_end_date', store = True,
+        inverse = '_set_end_date')
     seats = fields.Integer(string="Number of seats")
     percentage = fields.Float(string="Percentage of taken seats", compute = '_compute_percentage')
 
     instructor_id = fields.Many2one('res.partner', string="Instructor",
         domain = [('instructor', '=', True)])
     attendee_ids = fields.Many2many('res.partner', string="Attendees")
+    attendees_count = fields.Integer(string="Number of attendees", compute='_get_number_attendees')
     course_id = fields.Many2one('openacademy.course',
         ondelete='cascade', string='Course', required=True)
+    color = fields.Integer()
     
-    @api.onchange('seats', 'attendee_ids'):
+    @api.onchange('seats', 'attendee_ids')
     def _verify_valid_seats(self):
         if self.seats < 0:
             return {
@@ -87,6 +90,22 @@ class Session(models.Model):
                 }
             }
 
+    def _get_end_date(self):
+        for record in self:
+            if record.duration:
+                t_days = max(record.duration - 1, 0)
+                t_delta = timedelta(days= t_days)
+                self.end_date = self.start_date + t_delta
+
+            else:
+                self.end_date = self.start_date
+
+    def _set_end_date(self):
+        for record in self:
+            if record.start_date and record.end_date:
+                record.duration = (record.end_date - record.start_date).days +1
+
+
     def _compute_percentage(self):
         for record in self:
             if record.seats:
@@ -94,9 +113,13 @@ class Session(models.Model):
             else:
                 record.percentage = 0.0
     
+    def _get_number_attendees(self):
+        for record in self:
+            record.attendees_count = len(record.attendee_ids)
+    
     @api.constrains('instructor_id', 'attendee_ids')
     def _check_instructor_not_in_attendees(self):
-        for r in self:
-            if r.instructor_id and r.instructor_id in r.attendee_ids:
-                raise exceptions.ValidationError("A session's instructor can't be an attendee")
+        for record in self:
+            if record.instructor_id and record.instructor_id in record.attendee_ids:
+                raise exceptions.ValidationError('Instructor can\'t be attendee for the same course')
     
