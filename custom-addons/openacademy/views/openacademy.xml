@@ -19,11 +19,13 @@
                                 <field name="course_id"/>
                                 <field name="name"/>
                                 <field name="instructor_id"/>
+                                <field name="active"/>
                             </group>
                             <group string="Schedule">
                                 <field name="start_date"/>
                                 <field name="duration"/>
                                 <field name="seats"/>
+                                <field name="percentage" widget="progressbar"/>
                             </group>
                         </group>
                         <label for="attendee_ids"/>
@@ -40,6 +42,7 @@
                 <tree string="Session Tree">
                     <field name="name"/>
                     <field name="course_id"/>
+                    <field name="percentage" widget="progressbar"/>
                 </tree>
             </field>
         </record>
